@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { logger } from './logger';
 
+// Opcodes map to a function transforming the ints and returning the next position
 const opcodes: Map<number, (pos: number, ints: number[]) => number> = new Map([
   [
     1,
@@ -23,35 +24,48 @@ const opcodes: Map<number, (pos: number, ints: number[]) => number> = new Map([
 function processIntcode(pos: number, ints: number[]): number {
   if (opcodes.has(ints[pos])) {
     return opcodes.get(ints[pos])!(pos, ints);
-  } else {
-    logger.error(`Unknown opcode ${ints[pos]} at position ${pos}`);
   }
-  return pos + 1;
+
+  logger.debug({ pos, opcode: ints[pos] }, `Unknown opcode`);
+  return ints.length;
 }
 
-export function partOne(filePath: string): number {
+function maybeAlarmCode1202(intcode: number[]): void {
+  if (process.env.AOC_1202 !== 'true') {
+    return;
+  }
+
+  intcode[1] = 12;
+  intcode[2] = 2;
+}
+
+export function partOne(filePath: string): number[] {
   const fileContents = fs.readFileSync(filePath, 'utf-8');
   let lines = fileContents.split('\n');
   const expected = lines[0];
-  lines = lines.slice(2);
+  lines = lines.slice(3);
   logger.info(
     `Running day 2 part one with ${lines.length} lines and expected ${expected}`,
   );
 
+  const intcode = lines[0].split(',').map(Number);
+  maybeAlarmCode1202(intcode);
+
   let i = 0;
-  while (i < lines.length) {
-    i = processIntcode(i, lines);
+  while (i < intcode.length) {
+    i = processIntcode(i, intcode);
   }
 
-  logger.info({ value: '', expected: expected }, 'Day 2 part one');
-  return NaN;
+  logger.debug({ intcode: intcode }, 'Final intcode program');
+  logger.info({ pos0: intcode[0], expected: expected }, 'Day 2 part one');
+  return intcode;
 }
 
-export function partTwo(filePath: string): number {
+export function partTwo(filePath: string): number[] {
   const fileContents = fs.readFileSync(filePath, 'utf-8');
   let lines = fileContents.split('\n');
   const expected = lines[1];
-  lines = lines.slice(2);
+  lines = lines.slice(3);
   logger.info(
     `Running day 2 part two with ${lines.length} lines and expected ${expected}`,
   );
@@ -59,5 +73,5 @@ export function partTwo(filePath: string): number {
   // TODO: Implement part two logic
 
   logger.info({ value: '', expected: expected }, 'Day 2 part two');
-  return NaN;
+  return [];
 }
