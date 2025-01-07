@@ -1,42 +1,39 @@
 import * as fs from 'fs';
 import { logger } from './logger';
 
-// Opcodes map to a function transforming the ints and returning the next position
-const opcodes: Map<number, (pos: number, ints: number[]) => number> = new Map([
-  [
-    1,
-    (pos, ints) => {
-      // Add!
-      ints[ints[pos + 3]] = ints[ints[pos + 1]] + ints[ints[pos + 2]];
-      return pos + 4;
-    },
-  ],
-  [
-    2,
-    (pos, ints) => {
-      // Multiply!
-      ints[ints[pos + 3]] = ints[ints[pos + 1]] * ints[ints[pos + 2]];
-      return pos + 4;
-    },
-  ],
-]);
+// Opcodes map to a function transforming the ints and returning the number of values used
+const opcodes: Map<number, (pointer: number, memory: number[]) => number> =
+  new Map([
+    [
+      1,
+      (pointer, memory) => {
+        // Add!
+        memory[memory[pointer + 3]] =
+          memory[memory[pointer + 1]] + memory[memory[pointer + 2]];
+        return 4;
+      },
+    ],
+    [
+      2,
+      (pointer, memory) => {
+        // Multiply!
+        memory[memory[pointer + 3]] =
+          memory[memory[pointer + 1]] * memory[memory[pointer + 2]];
+        return 4;
+      },
+    ],
+  ]);
 
-function processIntcode(pos: number, ints: number[]): number {
-  if (opcodes.has(ints[pos])) {
-    return opcodes.get(ints[pos])!(pos, ints);
+function execute(memory: number[]) {
+  let pointer = 0;
+  while (pointer < memory.length) {
+    if (!opcodes.has(memory[pointer])) {
+      logger.debug({ pos: pointer, opcode: memory[pointer] }, `Unknown opcode`);
+      return;
+    }
+
+    pointer += opcodes.get(memory[pointer])!(pointer, memory);
   }
-
-  logger.debug({ pos, opcode: ints[pos] }, `Unknown opcode`);
-  return ints.length;
-}
-
-function maybeAlarmCode1202(intcode: number[]): void {
-  if (process.env.AOC_1202 !== 'true') {
-    return;
-  }
-
-  intcode[1] = 12;
-  intcode[2] = 2;
 }
 
 export function partOne(filePath: string): number[] {
@@ -48,17 +45,17 @@ export function partOne(filePath: string): number[] {
     `Running day 2 part one with ${lines.length} lines and expected ${expected}`,
   );
 
-  const intcode = lines[0].split(',').map(Number);
-  maybeAlarmCode1202(intcode);
-
-  let i = 0;
-  while (i < intcode.length) {
-    i = processIntcode(i, intcode);
+  const memory = lines[0].split(',').map(Number);
+  if (!filePath.includes('sample')) {
+    memory[1] = 12;
+    memory[2] = 2;
   }
 
-  logger.debug({ intcode: intcode }, 'Final intcode program');
-  logger.info({ pos0: intcode[0], expected: expected }, 'Day 2 part one');
-  return intcode;
+  execute(memory);
+
+  logger.debug({ memory }, 'Final intcode program');
+  logger.info({ pos0: memory[0], expected: expected }, 'Day 2 part one');
+  return memory;
 }
 
 export function partTwo(filePath: string): number[] {
@@ -70,8 +67,26 @@ export function partTwo(filePath: string): number[] {
     `Running day 2 part two with ${lines.length} lines and expected ${expected}`,
   );
 
-  // TODO: Implement part two logic
+  // What pair of noun and verb generate 19690720
+  const memory = lines[0].split(',').map(Number);
+  let noun = -1;
+  let verb = 0;
+  let output = 0;
+  while (output !== 19690720) {
+    noun++;
+    if (noun > 99) {
+      noun = 0;
+      verb++;
+    }
+    const memCopy = memory.slice();
+    memCopy[1] = noun;
+    memCopy[2] = verb;
 
-  logger.info({ value: '', expected: expected }, 'Day 2 part two');
-  return [];
+    execute(memCopy);
+    output = memCopy[0];
+  }
+
+  const finalAnswer = 100 * noun + verb;
+  logger.info({ finalAnswer, expected: expected }, 'Day 2 part two');
+  return memory;
 }
