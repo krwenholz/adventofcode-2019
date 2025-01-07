@@ -4,8 +4,8 @@ import { logger } from './logger';
 export function partOne(filePath: string): number {
   const fileContents = fs.readFileSync(filePath, 'utf-8');
   let lines = fileContents.split('\n');
-  const expected = lines[0];
-  lines = lines.slice(2);
+  const expected = lines[1];
+  lines = lines.slice(3);
   logger.info(
     `Running day 1 part one with ${lines.length} lines and expected ${expected}`,
   );
@@ -35,8 +35,8 @@ function getFuel(mass: number): number {
 export function partTwo(filePath: string): number {
   const fileContents = fs.readFileSync(filePath, 'utf-8');
   let lines = fileContents.split('\n');
-  const expected = lines[1];
-  lines = lines.slice(2);
+  const expected = lines[2];
+  lines = lines.slice(3);
   logger.info(
     `Running day 1 part two with ${lines.length} lines and expected ${expected}`,
   );

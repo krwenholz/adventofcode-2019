@@ -8,14 +8,19 @@ fs.readdirSync('./inputs').forEach(file => {
     .readFileSync('./inputs/' + file)
     .toString()
     .split('\n');
-  const partOneExpected = contents[0];
-  const partTwoExpected = contents[1];
+  const kindFlag = contents[0];
+  const partOneExpected = contents[1];
+  const partTwoExpected = contents[2];
+
+  if (kindFlag !== 'normal') {
+    return;
+  }
 
   if (!name || (partOneExpected === '???' && partTwoExpected === '???')) {
     return;
   }
 
-  describe(`data_driven ${day}.${name}`, () => {
+  describe(`normal ${day}.${name}`, () => {
     if (partOneExpected != '???') {
       test(`part one`, async () => {
         const module = await import(`../src/day${day}.ts`);
